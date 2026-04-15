@@ -2,7 +2,7 @@
 
 Project Machine Learning ini dibuat untuk mendeteksi awal risiko kesehatan mental (stres dan depresi) tingkat mahasiswa menggunakan model **Random Forest Regressor** (dengan R2 Score >90%). Model ini dilatih menggunakan kombinasi dataset sekunder dari Kaggle dan data primer langsung dari survei independen (Google Forms) yang menerapkan tahapan *Feature Engineering* kompleks.
 
-Proyek ini tidak hanya berisi hasil riset komprehensif, tetapi juga menyertakan **Aplikasi Berbasis Web (Streamlit)** berserta generator laporan PDF otomatis.
+Proyek ini tidak hanya berisi hasil riset komprehensif, tetapi juga menyertakan **Aplikasi Berbasis Web (Streamlit)
 
 ---
 
@@ -10,7 +10,6 @@ Proyek ini tidak hanya berisi hasil riset komprehensif, tetapi juga menyertakan 
 1. **Analisis Data & Prediksi**: Memprediksi tingkat stres pada skala 0 (Rendah), 1 (Sedang), dan 2 (Tinggi).
 2. **20 Indikator Masukan**: Menilainya melalui faktor *Psikologis*, *Akademik*, *Gaya Hidup*, dan *Lingkungan/Sosial*.
 3. **Web Aplikasi Streamlit**: Interface/UI yang mudah digunakan oleh kalangan awam.
-4. **Generator PDF Laporan**: Membuat laporan PDF berformat skripsi/akademis secara otomatis dari script Python.
 
 ---
 
