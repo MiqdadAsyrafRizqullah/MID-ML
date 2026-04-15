@@ -1,0 +1,9 @@
+pandas
+numpy
+scikit-learn>=1.0.0
+xgboost
+matplotlib
+seaborn
+streamlit
+fpdf2
+PyPDF2
