@@ -53,8 +53,8 @@ def load_and_train_model():
     df_fe['wellbeing_index'] = df_fe['sleep_quality'] + df_fe['basic_needs'] + df_fe['self_esteem']
     df_fe['stress_interaction'] = df_fe['anxiety_level'] * df_fe['depression']
     
-    X = df_fe.drop('stress_level', axis=1).fillna(0)
-    y = df_fe['stress_level'].fillna(0)
+    X = df_fe.drop('stress_level', axis=1).apply(pd.to_numeric, errors='coerce').fillna(0)
+    y = pd.to_numeric(df_fe['stress_level'], errors='coerce').fillna(0)
     
     # 4. Melatih Model Terbaik (Tanpa Scaling Eksternal, sesuai prinsip BAB 7)
     model = RandomForestRegressor(random_state=42, n_estimators=150, max_depth=5)
