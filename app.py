@@ -17,7 +17,7 @@ def load_and_train_model():
         df_gform['mental_health_history'] = df_gform['mental_health_history'].map({'Ya': 1, 'Tidak': 0})
     
     if 'stress_level' in df_gform.columns and df_gform['stress_level'].dtype == 'object':
-        df_gform['stress_level'] = df_gform['stress_level'].astype(str).str.extract(r'\((\d)\)').astype(float).astype(int)
+        df_gform['stress_level'] = df_gform['stress_level'].astype(str).str.extract(r'\((\d)\)')[0].astype(float).astype(int)
         
     df_gform.drop_duplicates(inplace=True)
     
@@ -53,8 +53,8 @@ def load_and_train_model():
     df_fe['wellbeing_index'] = df_fe['sleep_quality'] + df_fe['basic_needs'] + df_fe['self_esteem']
     df_fe['stress_interaction'] = df_fe['anxiety_level'] * df_fe['depression']
     
-    X = df_fe.drop('stress_level', axis=1)
-    y = df_fe['stress_level']
+    X = df_fe.drop('stress_level', axis=1).fillna(0)
+    y = df_fe['stress_level'].fillna(0)
     
     # 4. Melatih Model Terbaik (Tanpa Scaling Eksternal, sesuai prinsip BAB 7)
     model = RandomForestRegressor(random_state=42, n_estimators=150, max_depth=5)
