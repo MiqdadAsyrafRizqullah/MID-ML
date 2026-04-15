@@ -46,13 +46,6 @@ streamlit run app.py
 
 ---
 
-## 🎓 Cara Menjalankan Fitur Laporan
-Apabila Anda butuh men-*generate* ulang versi laporan otomatis tanpa harus menyalin satu per satu, ketik kode berikut:
-```bash
-python generate_laporan.py
-```
-Nantinya akan mendarat file PDF Laporan berformat sidang bernama `Laporan E1E124041 - Miqdad Asyraf Rizqullah (Machine Learning).pdf`.
-
 ---
 
 **Hak Cipta Riset & Pemodelan Machine Learning**: 
