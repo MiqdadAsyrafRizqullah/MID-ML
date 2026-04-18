@@ -49,9 +49,15 @@ def load_and_train_model():
         'extracurricular_activities': 5
     }
     
-    for col, m_val in mapping_config.items():
+    # Hanya lakukan scaling pada kolom yang ada di df_gform dan bernilai numerik
+    # mental_health_history TIDAK boleh diskalakan karena sudah 0/1
+    scalable_cols = {k: v for k, v in mapping_config.items() if k != 'mental_health_history'}
+    
+    for col, m_val in scalable_cols.items():
         if col in df_gform.columns:
-            # GForm 1-5 -> Kaggle 0-m_val
+            # Pastikan kolom adalah numerik sebelum dihitung
+            df_gform[col] = pd.to_numeric(df_gform[col], errors='coerce').fillna(1)
+            # Formula: GForm 1-5 -> Kaggle 0-m_val
             df_gform[col] = ((df_gform[col] - 1) / 4) * m_val
     
     # Pastikan urutan dan nama kolom GForm mutlak sama dengan Kaggle
