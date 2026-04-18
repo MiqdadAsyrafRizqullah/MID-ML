@@ -9,69 +9,52 @@ def load_and_train_model():
     df_kaggle = pd.read_csv('StressLevelDataset.csv')
     df_gform = pd.read_csv('DatasetStressMiqdad - Form Responses 1.csv')
     
-    # 2. Preprocessing Data Google Form persis seperti di Notebook
+    # 2. Preprocessing Data Google Form
     df_gform = df_gform.drop('Timestamp', axis=1, errors='ignore')
+    df_gform.rename(columns={'living_conditions]': 'living_conditions'}, inplace=True)
     
-    # Encoding
-    if 'mental_health_history' in df_gform.columns and df_gform['mental_health_history'].dtype == 'object':
-        df_gform['mental_health_history'] = df_gform['mental_health_history'].map({'Ya': 1, 'Tidak': 0})
+    # Encoding Kategori ke Numerik
+    if 'mental_health_history' in df_gform.columns:
+        df_gform['mental_health_history'] = df_gform['mental_health_history'].map({'Ya': 1, 'Tidak': 0}).fillna(0)
     
-    if 'stress_level' in df_gform.columns and df_gform['stress_level'].dtype == 'object':
-        df_gform['stress_level'] = df_gform['stress_level'].astype(str).str.extract(r'\((\d)\)')[0].astype(float).astype(int)
+    if 'stress_level' in df_gform.columns:
+        # Ekstrak angka saja dan pastikan jadi INTEGER
+        df_gform['stress_level'] = df_gform['stress_level'].astype(str).str.extract(r'\((\d)\)')[0].fillna(0).astype(int)
         
     df_gform.drop_duplicates(inplace=True)
     
-    # Penyesuaian nama kolom GForm agar cocok dengan Kaggle
-    df_gform.rename(columns={'living_conditions]': 'living_conditions'}, inplace=True)
-    
-    # Penyesuaian Skala Data Google Form (1-5 ke skala Kaggle)
-    # Catatan: Kaggle memiliki rentang berbeda-beda (0-21, 0-3, 0-5, dll)
+    # Penyesuaian Skala (GForm 1-5 -> Kaggle Range)
     mapping_config = {
-        'anxiety_level': 21,
-        'depression': 27,
-        'self_esteem': 30,
-        'mental_health_history': 1,
-        'academic_performance': 5,
-        'study_load': 5,
-        'teacher_student_relationship': 5,
-        'future_career_concerns': 5,
-        'social_support': 3,
-        'peer_pressure': 5,
-        'bullying': 5,
-        'headache': 5,
-        'sleep_quality': 5,
-        'breathing_problem': 5,
-        'blood_pressure': 3,
-        'basic_needs': 5,
-        'noise_level': 5,
-        'living_conditions': 5,
-        'safety': 5,
-        'extracurricular_activities': 5
+        'anxiety_level': 21, 'depression': 27, 'self_esteem': 30, 'social_support': 3, 'blood_pressure': 3
     }
-    
-    # Hanya lakukan scaling pada kolom yang ada di df_gform dan bernilai numerik
-    # mental_health_history TIDAK boleh diskalakan karena sudah 0/1
-    scalable_cols = {k: v for k, v in mapping_config.items() if k != 'mental_health_history'}
-    
-    for col, m_val in scalable_cols.items():
+    # Kolom lainnya mayoritas adalah 0-5
+    for col in df_kaggle.columns:
+        if col not in mapping_config and col != 'stress_level' and col != 'mental_health_history':
+            mapping_config[col] = 5
+            
+    for col, m_val in mapping_config.items():
         if col in df_gform.columns:
-            # Pastikan kolom adalah numerik sebelum dihitung
+            # Paksa numerik dan konversi skala
             df_gform[col] = pd.to_numeric(df_gform[col], errors='coerce').fillna(1)
-            # Formula: GForm 1-5 -> Kaggle 0-m_val
             df_gform[col] = ((df_gform[col] - 1) / 4) * m_val
     
-    # Pastikan urutan dan nama kolom GForm mutlak sama dengan Kaggle
-    df_gform = df_gform[df_kaggle.columns]
+    # Samakan urutan kolom dan TIPE DATA sebelum digabung
+    df_gform = df_gform[df_kaggle.columns].astype(float)
+    df_kaggle = df_kaggle.astype(float)
+    
+    # Memastikan target stress_level kembali ke Integer untuk klasifikasi/regresi yang stabil
+    df_gform['stress_level'] = df_gform['stress_level'].astype(int)
+    df_kaggle['stress_level'] = df_kaggle['stress_level'].astype(int)
             
-    # Oversampling Google Form (Domain Adaptation)
-    df_gform_train = df_gform.sample(frac=0.7, random_state=42)
-    df_oversampled = pd.concat([df_gform_train]*30, ignore_index=True)
+    # Oversampling Google Form (Bobot 50x agar setara pengaruhnya dengan dataset luar)
+    df_gform_train = df_gform.sample(frac=0.8, random_state=42)
+    df_oversampled = pd.concat([df_gform_train]*50, ignore_index=True)
     
     # Penggabungan Final
     df_combined = pd.concat([df_kaggle, df_oversampled], ignore_index=True)
     df_fe = df_combined.copy()
     
-    # 3. Feature Engineering (WAJIB SAMA ANTARA TRAIN & PREDICT)
+    # 3. Feature Engineering
     df_fe['psychological_burden'] = df_fe['anxiety_level'] + df_fe['depression']
     df_fe['academic_pressure'] = df_fe['study_load'] + (5 - df_fe['academic_performance'])
     df_fe['social_stress'] = df_fe['peer_pressure'] + (3 - df_fe['social_support'])
@@ -80,11 +63,11 @@ def load_and_train_model():
     df_fe['wellbeing_index'] = df_fe['sleep_quality'] + df_fe['basic_needs'] + df_fe['self_esteem']
     df_fe['stress_interaction'] = df_fe['anxiety_level'] * df_fe['depression']
     
-    X = df_fe.drop('stress_level', axis=1).apply(pd.to_numeric, errors='coerce').fillna(0)
-    y = pd.to_numeric(df_fe['stress_level'], errors='coerce').fillna(0)
+    X = df_fe.drop('stress_level', axis=1).fillna(0)
+    y = df_fe['stress_level']
     
-    # 4. Melatih Model Terbaik (Tanpa Scaling Eksternal, sesuai prinsip BAB 7)
-    model = RandomForestRegressor(random_state=42, n_estimators=150, max_depth=5)
+    # 4. Pelatihan Model (Optimasi Kecepatan & Akurasi)
+    model = RandomForestRegressor(random_state=42, n_estimators=200, max_depth=12, min_samples_leaf=1)
     model.fit(X, y)
     
     return model, X.columns.tolist()
