@@ -21,30 +21,51 @@ def load_and_train_model():
         
     df_gform.drop_duplicates(inplace=True)
     
-    # Penyesuaian Skala Data Google Form
-    max_k = {'anxiety_level': 21, 'depression': 27, 'social_support': 3}
-    for col in ['headache', 'sleep_quality', 'academic_performance', 'study_load', 'teacher_student_relationship', 'peer_pressure']:
-        max_k[col] = 5
-        
-    if 'living_conditions]' in df_gform.columns:
-        df_gform.rename(columns={'living_conditions]': 'living_conditions'}, inplace=True)
-        
-    for col, m_val in max_k.items():
+    # Penyesuaian nama kolom GForm agar cocok dengan Kaggle
+    df_gform.rename(columns={'living_conditions]': 'living_conditions'}, inplace=True)
+    
+    # Penyesuaian Skala Data Google Form (1-5 ke skala Kaggle)
+    # Catatan: Kaggle memiliki rentang berbeda-beda (0-21, 0-3, 0-5, dll)
+    mapping_config = {
+        'anxiety_level': 21,
+        'depression': 27,
+        'self_esteem': 30,
+        'mental_health_history': 1,
+        'academic_performance': 5,
+        'study_load': 5,
+        'teacher_student_relationship': 5,
+        'future_career_concerns': 5,
+        'social_support': 3,
+        'peer_pressure': 5,
+        'bullying': 5,
+        'headache': 5,
+        'sleep_quality': 5,
+        'breathing_problem': 5,
+        'blood_pressure': 3,
+        'basic_needs': 5,
+        'noise_level': 5,
+        'living_conditions': 5,
+        'safety': 5,
+        'extracurricular_activities': 5
+    }
+    
+    for col, m_val in mapping_config.items():
         if col in df_gform.columns:
+            # GForm 1-5 -> Kaggle 0-m_val
             df_gform[col] = ((df_gform[col] - 1) / 4) * m_val
+    
+    # Pastikan urutan dan nama kolom GForm mutlak sama dengan Kaggle
+    df_gform = df_gform[df_kaggle.columns]
             
-    # Oversampling Google Form
-    # Ambil 70% saja agar mirip split train
+    # Oversampling Google Form (Domain Adaptation)
     df_gform_train = df_gform.sample(frac=0.7, random_state=42)
     df_oversampled = pd.concat([df_gform_train]*30, ignore_index=True)
     
-    # Penggabungan
+    # Penggabungan Final
     df_combined = pd.concat([df_kaggle, df_oversampled], ignore_index=True)
-    
-    # Menyamakan tipe dan nama kolom
     df_fe = df_combined.copy()
     
-    # 3. Feature Engineering
+    # 3. Feature Engineering (WAJIB SAMA ANTARA TRAIN & PREDICT)
     df_fe['psychological_burden'] = df_fe['anxiety_level'] + df_fe['depression']
     df_fe['academic_pressure'] = df_fe['study_load'] + (5 - df_fe['academic_performance'])
     df_fe['social_stress'] = df_fe['peer_pressure'] + (3 - df_fe['social_support'])
